@@ -15,9 +15,10 @@ if [ -f "/usr/share/games/$GameName/$GameName.desktop" ]; then
 fi
 
 if [ "$ok" == 1 ]; then
-	decodepng "$OUTRUNTrueDir/Hakchi_OUTRUN_assets/doom1splash-min.png" > /dev/fb0;
-	[ ! -L "$OUTRUNTrueDir/etc/libretro/roms" ] && ln -sf "$OUTRUNPortableFiles" "$OUTRUNTrueDir/etc/libretro/roms"
-	exec retroarch-clover "../../..$OUTRUNPortableCore" #"$OUTRUNPortableFiles/<ROM>" I guess this is right? 
+   decodepng "$OUTRUNTrueDir/Hakchi_OUTRUN_assets/doom1splash-min.png" > /dev/fb0;
+   [ ! -d "/etc/libretro/system/cannonball" ] && mkdir -p "/etc/libretro/system/cannonball"
+   ! mountpoint "/etc/libretro/system/cannonball" && mount_bind "$OUTRUNPortableFiles" "/etc/libretro/system/cannonball"
+   exec retroarch-clover "../../..$OUTRUNPortableCore" #"$OUTRUNPortableFiles/<ROM>" I guess this is right? 
 else
 	decodepng "$OUTRUNTrueDir/Hakchi_OUTRUN_assets/doomerror_files-min.png" > /dev/fb0;
 	sleep 5
