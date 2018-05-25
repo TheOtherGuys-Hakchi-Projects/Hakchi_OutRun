@@ -14,7 +14,7 @@ if [ -f "/usr/share/games/$GameName/$GameName.desktop" ]; then
 	ok=1
 fi
 
-if [ ! -f "$OUTRUNPortableFiles/epr-10381a.132" ]; then
+if [ ! -f "$OUTRUNPortableFiles/epr-10381a.132" ] && [ ! -f "$OUTRUNPortableFiles/epr-10381b.132" ]; then
 	ok=0
 fi
 
