@@ -3,7 +3,7 @@ Type=Application
 Exec=/bin/sh /var/games/CLV-Z-HAKCHI_OUTRUN/hakchi_OUTRUN.sh
 Path=/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN
 Name=Hakchi OutRun
-Icon=/var/games/CLV-Z-HAKCHI_DOOM/CLV-Z-HAKCHI_OUTRUN.png
+Icon=/var/games/CLV-Z-HAKCHI_OUTRUN/CLV-Z-HAKCHI_OUTRUN.png
 
 [X-CLOVER Game]
 Code=CLV-Z-HAKCHI_OUTRUN
