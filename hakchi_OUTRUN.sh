@@ -20,8 +20,7 @@ fi
 
 if [ "$ok" == 1 ]; then
    decodepng "$OUTRUNTrueDir/Hakchi_OUTRUN_assets/outrunsplash-min.png" > /dev/fb0;
-   [ -f "$rootfs/share/retroarch/assets/RAloading-min.png" ] && mount_bind "$OUTRUNTrueDir/Hakchi_OUTRUN_assets/outrunsplash-min.png" "$rootfs/share/retroarch/assets/RAloading-min.png"
-   exec retroarch-clover "../../..$OUTRUNPortableCore" "$OUTRUNPortableFiles/outrun.game"
+   exec retroarch-clover "../../..$OUTRUNPortableCore" "$OUTRUNPortableFiles/outrun.game" --custom-loadscreen ../../../../../../../../$OUTRUNTrueDir/Hakchi_OUTRUN_assets/outrunsplash-min.png
 else
 	decodepng "$OUTRUNTrueDir/Hakchi_OUTRUN_assets/outrunerror_files-min.png" > /dev/fb0;
 	sleep 5
