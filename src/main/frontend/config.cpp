@@ -22,6 +22,10 @@
 #include "engine/ohiscore.hpp"
 #include "engine/audio/osoundint.hpp"
 
+//Swingflip addition
+#include <unistd.h>
+#define GetCurrentDir getcwd
+
 // api change in boost 1.56
 #include <boost/version.hpp>
 #if (BOOST_VERSION >= 105600)
@@ -58,6 +62,7 @@ void Config::load(const std::string &filename)
     // is thrown.
     try
     {
+	std::cout << "[HAKCHI] Loading config from: " << filename << "\n";
         read_xml(filename, pt_config, boost::property_tree::xml_parser::trim_whitespace);
     }
     catch (std::exception &e)
@@ -250,11 +255,15 @@ bool Config::save(const std::string &filename)
 
     try
     {
-        write_xml(filename, pt_config, std::locale(), xml_writer_settings('\t', 1)); // Tab space 1
+        write_xml("/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename, pt_config, std::locale(), xml_writer_settings('\t', 1)); // Tab space 1
     }
     catch (std::exception &e)
     {
-        std::cout << "Error saving config: " << e.what() << "\n";
+	char buff[FILENAME_MAX];
+	GetCurrentDir( buff, FILENAME_MAX );
+  	std::string current_working_dir(buff);
+        std::cout << "[HAKCHI] Current working directory: " << current_working_dir << "\n";
+	std::cout << "Error saving config: " << e.what() << "\n";
         return false;
     }
     return true;
@@ -267,7 +276,7 @@ void Config::load_scores(const std::string &filename)
 
     try
     {
-        read_xml(engine.jap ? filename + "_jap.xml" : filename + ".xml" , pt, boost::property_tree::xml_parser::trim_whitespace);
+        read_xml(engine.jap ? "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + "_jap.xml" : "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + ".xml" , pt, boost::property_tree::xml_parser::trim_whitespace);
     }
     catch (std::exception &e)
     {
@@ -318,7 +327,7 @@ void Config::save_scores(const std::string &filename)
     
     try
     {
-        write_xml(engine.jap ? filename + "_jap.xml" : filename + ".xml", pt, std::locale(), xml_writer_settings('\t', 1)); // Tab space 1
+        write_xml(engine.jap ? "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + "_jap.xml" : "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + ".xml", pt, std::locale(), xml_writer_settings('\t', 1)); // Tab space 1
     }
     catch (std::exception &e)
     {
@@ -338,7 +347,7 @@ void Config::load_tiletrial_scores()
 
     try
     {
-        read_xml(engine.jap ? filename + "_jap.xml" : filename + ".xml" , pt, boost::property_tree::xml_parser::trim_whitespace);
+        read_xml(engine.jap ? "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + "_jap.xml" : "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + ".xml" , pt, boost::property_tree::xml_parser::trim_whitespace);
     }
     catch (std::exception &e)
     {
@@ -371,7 +380,7 @@ void Config::save_tiletrial_scores()
 
     try
     {
-        write_xml(engine.jap ? filename + "_jap.xml" : filename + ".xml", pt, std::locale(), xml_writer_settings('\t', 1)); // Tab space 1
+        write_xml(engine.jap ? "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + "_jap.xml" : "/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename + ".xml", pt, std::locale(), xml_writer_settings('\t', 1)); // Tab space 1
     }
     catch (std::exception &e)
     {

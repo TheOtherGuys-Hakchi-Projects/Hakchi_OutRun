@@ -293,7 +293,7 @@ int main(int argc, char* argv[])
     if (loaded)
     {
         // Load XML Config
-        config.load(FILENAME_CONFIG);
+        config.load("/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + FILENAME_CONFIG);
 
         // Load fixed PCM ROM based on config
         if (config.sound.fix_samples)

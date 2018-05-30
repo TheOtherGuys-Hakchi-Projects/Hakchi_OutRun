@@ -206,7 +206,7 @@ void Audio::load_wav(const char* filename)
 
         pause_audio();
 
-        if( SDL_LoadWAV(filename, &wave, &data, &length) == NULL)
+        if( SDL_LoadWAV("/var/lib/clover/profiles/0/CLV-Z-HAKCHI_OUTRUN/" + filename, &wave, &data, &length) == NULL)
         {
             wavfile.loaded = 0;
             resume_audio();
