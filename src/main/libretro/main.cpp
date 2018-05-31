@@ -180,7 +180,7 @@ static void config_init(void)
     // Time Trial Mode
     // ------------------------------------------------------------------------
 
-    config.ttrial.laps    = 5;
+    config.ttrial.laps    = 3;
     config.ttrial.traffic = 3;
 
     config.cont_traffic   = 3;
@@ -206,17 +206,46 @@ char rom_path[1024];
 
 void retro_set_environment(retro_environment_t cb)
 {
-    struct retro_log_callback log;
-    bool no_rom                     = true;
+   struct retro_log_callback log;
 
-    environ_cb = cb;
+   environ_cb = cb;
 
-    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
-        log_cb = log.log;
-    else
-        log_cb = NULL;
+   struct retro_variable variables[] = {
+      { "cannonball_menu_enabled", "Menu At Start; ON|OFF" },
+      { "cannonball_menu_road_scroll_speed", "Menu Road Scroll Speed; 50|60|70|80|90|100|150|200|300|400|500|5|10|15|20|25|30|40" },
+      { "cannonball_video_widescreen", "Video Widescreen Mode; ON|OFF" },
+      { "cannonball_video_hires", "Video High-Resolution Mode; OFF|ON" },
+      { "cannonball_video_fps", "Video Framerate; Smooth (60)|Original (60/30)|Low (30)" },
+      { "cannonball_sound_advertise", "Advertise Sound; ON|OFF" },
+      { "cannonball_sound_preview", "Preview Music; ON|OFF" },
+      { "cannonball_sound_fix_samples", "Fix Samples (use opr-10188.71f); ON|OFF" },
+      { "cannonball_gear", "Gear Mode; Manual|Manual Cabinet|Manual 2 Buttons|Automatic" },
+      { "cannonball_steer_speed", "Digital Steer Speed; 3|4|5|6|7|8|9|1|2" },
+      { "cannonball_pedal_speed", "Digital Pedal Speed; 4|5|6|7|8|9|1|2|3" },
+      { "cannonball_dip_time", "Time; Easy (80s)|Normal (75s)|Hard (72s)|Very Hard (70s)|Infinite Time" },
+      { "cannonball_dip_traffic", "Traffic; Normal|Hard|Very Hard|No Traffic|Easy" },
+      { "cannonball_freeplay", "Freeplay Mode; OFF|ON" },
+      { "cannonball_jap", "Use Japanese Tracks Version; OFF|ON" },
+      { "cannonball_prototype", "Use Prototype Stage 1; OFF|ON" },
+      { "cannonball_level_objects", "Objects Limit Enhanced; ON|OFF" },
+      { "cannonball_randomgen", "Original Traffic Patterns Randomization; ON|OFF" },
+      { "cannonball_force_ai", "Force AI To Play; OFF|ON" },
+      { "cannonball_fix_bugs", "Fix Original Game Bugs; ON|OFF" },
+      { "cannonball_fix_timer", "Fix Timing Bugs; OFF|ON" },
+      { "cannonball_layout_debug", "Display Debug Info For LayOut; OFF|ON" },
+      { "cannonball_new_attract", "New Attract; ON|OFF" },
+      { "cannonball_ttrial_laps", "Time Trial Laps; 3|4|5|1|2" },
+      { "cannonball_ttrial_traffic", "Time Trial Traffic Amount; 3|4|5|6|7|8|0|1|2" },
+      { "cannonball_cont_traffic", "Continuous Mode Traffic Amount; 3|4|5|6|7|8|0|1|2" },
+      { NULL, NULL },
+   };
 
-   environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_rom);
+   if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
+      log_cb = log.log;
+   else
+      log_cb = NULL;
+
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
@@ -228,6 +257,352 @@ void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) { audio_batch_c
 void retro_set_input_poll(retro_input_poll_t cb) { input_poll_cb = cb; }
 
 void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
+
+void update_geometry()
+{
+  struct retro_system_av_info av_info;
+  retro_get_system_av_info(&av_info);
+  environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
+}
+
+static void update_variables(void)
+{
+   bool geometry_update = false;
+   struct retro_variable var;
+
+   var.key = "cannonball_menu_enabled";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.menu.enabled = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.menu.enabled = 0;
+   }
+
+   var.key = "cannonball_menu_road_scroll_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      config.menu.road_scroll_speed = atoi(var.value);
+   }
+
+   var.key = "cannonball_video_widescreen";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int newval = 0;
+
+      if (strcmp(var.value, "ON") == 0)
+         newval = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         newval = 0;
+
+      if (newval != config.video.widescreen)
+      {
+         config.video.widescreen = newval;
+         geometry_update = true;
+      }
+   }
+
+   var.key = "cannonball_video_hires";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int newval = 0;
+
+      if (strcmp(var.value, "ON") == 0)
+         newval = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         newval = 0;
+
+      if (newval != config.video.hires)
+      {
+         config.video.hires = newval;
+         geometry_update = true;
+      }
+   }
+
+   var.key = "cannonball_video_fps";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int newval = 0;
+
+      if (strcmp(var.value, "Smooth (60)") == 0)
+         newval = 2;
+      else if (strcmp(var.value, "riginal (60/30)") == 0)
+         newval = 1;
+      else if (strcmp(var.value, "Low (30)") == 0)
+         newval = 0;
+
+      if (newval != config.video.fps)
+      {
+         config.video.fps = newval;
+         geometry_update = true;
+      }
+   }
+
+   var.key = "cannonball_sound_advertise";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.sound.advertise = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.sound.advertise = 0;
+   }
+
+   var.key = "cannonball_sound_preview";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.sound.preview = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.sound.preview = 0;
+   }
+
+   var.key = "cannonball_sound_fix_samples";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.sound.fix_samples = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.sound.fix_samples = 0;
+   }
+
+   var.key = "cannonball_gear";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int gear_mode = 0;
+
+      if (strcmp(var.value, "Manual Cabinet") == 0)
+         gear_mode = 1;
+      else if (strcmp(var.value, "Manual 2 Buttons") == 0)
+         gear_mode = 2;
+      else if (strcmp(var.value, "Automatic") == 0)
+         gear_mode = 3;
+
+      config.controls.gear = gear_mode;
+   }
+
+   var.key = "cannonball_steer_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      config.controls.steer_speed = atoi(var.value);
+   }
+
+   var.key = "cannonball_pedal_speed";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      config.controls.pedal_speed = atoi(var.value);
+   }
+
+   var.key = "cannonball_dip_time";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int diptime = 0;
+      config.engine.freeze_timer = false;
+
+      if (strcmp(var.value, "Normal (75s)") == 0)
+         diptime = 1;
+      else if (strcmp(var.value, "Hard (72s)") == 0)
+         diptime = 2;
+      else if (strcmp(var.value, "Very Hard (70s)") == 0)
+         diptime = 3;
+      else if (strcmp(var.value, "Infinite Time") == 0)
+      {
+         diptime = 4;
+         config.engine.freeze_timer = true;
+      }
+
+      config.engine.dip_time = diptime;
+   }
+
+   var.key = "cannonball_dip_traffic";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int diptraffic = 0;
+      config.engine.disable_traffic = false;
+
+      if (strcmp(var.value, "Normal") == 0)
+         diptraffic = 1;
+      else if (strcmp(var.value, "Hard") == 0)
+         diptraffic = 2;
+      else if (strcmp(var.value, "Very Hard") == 0)
+         diptraffic = 3;
+      else if (strcmp(var.value, "No Traffic") == 0)
+      {
+         diptraffic = 4;
+         config.engine.disable_traffic = true;
+      }
+
+      config.engine.dip_traffic = diptraffic;
+   }
+
+   var.key = "cannonball_freeplay";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.freeplay = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.freeplay = 0;
+   }
+
+   var.key = "cannonball_jap";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.jap = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.jap = 0;
+   }
+
+   var.key = "cannonball_prototype";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.prototype = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.prototype = 0;
+   }
+
+   var.key = "cannonball_level_objects";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.level_objects = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.level_objects = 0;
+   }
+
+   var.key = "cannonball_randomgen";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "OFF") == 0)
+         config.engine.randomgen = 0;
+      else
+         config.engine.randomgen = 1;
+   }
+
+   var.key = "cannonball_force_ai";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "OFF") == 0)
+         config.engine.force_ai = false;
+      else
+         config.engine.force_ai = true;
+   }
+
+   var.key = "cannonball_fix_bugs";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.fix_bugs = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.fix_bugs = 0;
+   }
+
+   var.key = "cannonball_fix_timer";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.fix_timer = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.fix_timer = 0;
+   }
+
+   var.key = "cannonball_layout_debug";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.layout_debug = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.layout_debug = 0;
+   }
+
+   var.key = "cannonball_new_attract";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "ON") == 0)
+         config.engine.new_attract = 1;
+      else if (strcmp(var.value, "OFF") == 0)
+         config.engine.new_attract = 0;
+   }
+
+   var.key = "cannonball_ttrial_laps";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      config.ttrial.laps = atoi(var.value);
+   }
+
+   var.key = "cannonball_ttrial_traffic";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      config.ttrial.traffic = atoi(var.value);
+   }
+
+   var.key = "cannonball_cont_traffic";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      config.cont_traffic = atoi(var.value);
+   }
+
+   if (geometry_update)
+   {
+      video.disable();
+      video.init(&roms, &config.video);
+      video.sprite_layer->set_x_clip(false);
+      config.set_fps(config.video.fps);
+      update_geometry();
+   }
+}
 
 void retro_get_system_info(struct retro_system_info *info) {
     memset(info, 0, sizeof(*info));
@@ -245,7 +620,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info) {
     info->geometry.base_height  = S16_HEIGHT;
     info->geometry.max_width    = S16_WIDTH << 1;
     info->geometry.max_height   = S16_WIDTH << 1;
-    info->geometry.aspect_ratio = 16.0f / 9.0f;
+    info->geometry.aspect_ratio = (config.video.widescreen)? 16.0f / 9.0f : 4.0f / 3.0f;
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device) {
@@ -316,6 +691,8 @@ bool retro_load_game(const struct retro_game_info *info)
       return false;
 
    config_init();
+
+   update_variables();
 
    // Load fixed PCM ROM based on config
    if (config.sound.fix_samples)
@@ -458,6 +835,10 @@ static void process_events(void)
 
 void retro_run(void)
 {
+    bool updated = false;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+        update_variables();
+
     frame++;
 
     // Get CannonBoard Packet Data
